@@ -21,38 +21,62 @@ class TCXParser:
 
     def time_values(self):
         return [x.text for x in self.root.xpath('//ns:Time', namespaces={'ns': namespace})]
-    
+
     def cadence_values(self):
         return [int(x.text) for x in self.root.xpath('//ns:Cadence', namespaces={'ns': namespace})]
-    
+
     @property
-    def latitude(self):
+    def start_latitude(self):
         if hasattr(self.activity.Lap.Track.Trackpoint, 'Position'):
             return self.activity.Lap.Track.Trackpoint.Position.LatitudeDegrees.pyval
 
     @property
-    def longitude(self):
+    def start_longitude(self):
         if hasattr(self.activity.Lap.Track.Trackpoint, 'Position'):
             return self.activity.Lap.Track.Trackpoint.Position.LongitudeDegrees.pyval
 
     @property
+    def end_latitude(self):
+        if hasattr(self.activity.Lap[-1].Track.Trackpoint[-1], 'Position'):
+            return self.activity.Lap[-1].Track.Trackpoint[-1].Position.LatitudeDegrees.pyval
+
+    @property
+    def end_longitude(self):
+        if hasattr(self.activity.Lap[-1].Track.Trackpoint[-1], 'Position'):
+            return self.activity.Lap[-1].Track.Trackpoint[-1].Position.LongitudeDegrees.pyval
+
+    @property
     def activity_type(self):
-        return self.activity.attrib['Sport'].lower()
+        return self.activity.attrib['Sport']
+
+    @property
+    def started_at(self):
+        return self.activity.Lap.Track.Trackpoint.Time.pyval
 
     @property
     def completed_at(self):
         return self.activity.Lap[-1].Track.Trackpoint[-1].Time.pyval
-    
+
     @property
     def cadence_avg(self):
-        return self.activity.Lap[-1].Cadence
-    
+        return getattr(self.activity.Lap[-1], 'Cadence', None)
+
+    @property
+    def cadence_max(self):
+      """Returns max cadence of workout"""
+      cadence_data = self.cadence_values()
+      if len(cadence_data) > 0:
+          return max(cadence_data)
+
+    @property
+    def speed_max(self):
+        return self.activity.Lap[-1].MaximumSpeed
+
     @property
     def distance(self):
         distance_values = self.root.findall('.//ns:DistanceMeters', namespaces={'ns': namespace})
         if distance_values:
             return distance_values[-1]
-        return 0
 
     @property
     def distance_units(self):
@@ -66,17 +90,19 @@ class TCXParser:
     @property
     def calories(self):
         return sum(lap.Calories for lap in self.activity.Lap)
-    
+
     @property
     def hr_avg(self):
         """Average heart rate of the workout"""
         hr_data = self.hr_values()
-        return sum(hr_data)/len(hr_data)
+        if len(hr_data) > 0:
+            return sum(hr_data)/len(hr_data)
 
     @property
     def hr_max(self):
-        """Maximum heart rate of the workout"""
-        return max(self.hr_values())
+        hr_data = self.hr_values()
+        if len(hr_data) > 0:
+            return max(self.hr_values())
 
     @property
     def hr_min(self):
@@ -93,7 +119,8 @@ class TCXParser:
     def altitude_avg(self):
         """Average altitude for the workout"""
         altitude_data = self.altitude_points()
-        return sum(altitude_data)/len(altitude_data)
+        if len(altitude_data) > 0:
+            return sum(altitude_data)/len(altitude_data)
 
     @property
     def altitude_max(self):
@@ -128,9 +155,3 @@ class TCXParser:
             if diff < 0.0:
                 total_descent += abs(diff)
         return total_descent
-
-    @property
-    def cadence_max(self):
-      """Returns max cadence of workout"""
-      cadence_data = self.cadence_values()
-      return max(cadence_data)
