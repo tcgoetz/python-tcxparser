@@ -16,6 +16,12 @@ class TCXParser:
     def hr_values(self):
         return [int(x.text) for x in self.root.xpath('//ns:HeartRateBpm/ns:Value', namespaces={'ns': namespace})]
 
+    def latitude_values(self):
+        return [float(x.text) for x in self.root.xpath('//ns:Position/ns:LatitudeDegrees', namespaces={'ns': namespace})]
+
+    def longitude_values(self):
+        return [float(x.text) for x in self.root.xpath('//ns:Position/ns:LongitudeDegrees', namespaces={'ns': namespace})]
+
     def altitude_points(self):
         return [float(x.text) for x in self.root.xpath('//ns:AltitudeMeters', namespaces={'ns': namespace})]
 
@@ -26,24 +32,38 @@ class TCXParser:
         return [int(x.text) for x in self.root.xpath('//ns:Cadence', namespaces={'ns': namespace})]
 
     @property
+    def creator(self):
+        if hasattr(self.activity, 'Creator'):
+            return self.activity.Creator.Name.pyval
+
+    @property
+    def creator_version(self):
+        if hasattr(self.activity, 'Creator'):
+            return self.activity.Creator.UnitId.pyval
+
+    @property
     def start_latitude(self):
-        if hasattr(self.activity.Lap.Track.Trackpoint, 'Position'):
-            return self.activity.Lap.Track.Trackpoint.Position.LatitudeDegrees.pyval
+        latitude_data = self.latitude_values()
+        if len(latitude_data) > 0:
+            return latitude_data[0]
 
     @property
     def start_longitude(self):
-        if hasattr(self.activity.Lap.Track.Trackpoint, 'Position'):
-            return self.activity.Lap.Track.Trackpoint.Position.LongitudeDegrees.pyval
+        longitude_data = self.longitude_values()
+        if len(longitude_data) > 0:
+            return longitude_data[0]
 
     @property
     def end_latitude(self):
-        if hasattr(self.activity.Lap[-1].Track.Trackpoint[-1], 'Position'):
-            return self.activity.Lap[-1].Track.Trackpoint[-1].Position.LatitudeDegrees.pyval
+        latitude_data = self.latitude_values()
+        if len(latitude_data) > 0:
+            return latitude_data[-1]
 
     @property
     def end_longitude(self):
-        if hasattr(self.activity.Lap[-1].Track.Trackpoint[-1], 'Position'):
-            return self.activity.Lap[-1].Track.Trackpoint[-1].Position.LongitudeDegrees.pyval
+        longitude_data = self.longitude_values()
+        if len(longitude_data) > 0:
+            return longitude_data[-1]
 
     @property
     def activity_type(self):
@@ -102,7 +122,7 @@ class TCXParser:
     def hr_max(self):
         hr_data = self.hr_values()
         if len(hr_data) > 0:
-            return max(self.hr_values())
+            return max(hr_data)
 
     @property
     def hr_min(self):
