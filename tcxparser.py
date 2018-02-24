@@ -67,7 +67,7 @@ class TCXParser:
 
     @property
     def activity_type(self):
-        return self.activity.attrib['Sport']
+        return self.activity.attrib['Sport'].lower()
 
     @property
     def started_at(self):
