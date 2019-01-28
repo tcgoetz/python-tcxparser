@@ -105,11 +105,15 @@ class TCXParser:
     @property
     def duration(self):
         """Returns duration of workout in seconds."""
-        return sum(lap.TotalTimeSeconds for lap in self.activity.Lap)
+        duration = sum(lap.TotalTimeSeconds if hasattr(lap, 'TotalTimeSeconds') else 0  for lap in self.activity.Lap)
+        if duration > 0:
+            return duration
 
     @property
     def calories(self):
-        return sum(lap.Calories for lap in self.activity.Lap)
+        total_calories = sum(lap.Calories if hasattr(lap, 'Calories') else 0 for lap in self.activity.Lap)
+        if total_calories > 0:
+            return total_calories
 
     @property
     def hr_avg(self):
