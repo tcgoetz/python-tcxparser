@@ -71,11 +71,14 @@ class TCXParser:
 
     @property
     def started_at(self):
-        return self.activity.Lap.Track.Trackpoint.Time.pyval
+        try:
+            return self.activity.Lap.attrib['StartTime']
+        except Exception:
+            return self.activity.Lap.Track.Trackpoint.Time.pyval
 
     @property
-    def completed_at(self):
-        return self.activity.Lap[-1].Track.Trackpoint[-1].Time.pyval
+    def lap_count(self):
+        return len(self.activity.Lap)
 
     @property
     def cadence_avg(self):
@@ -118,15 +121,21 @@ class TCXParser:
     @property
     def hr_avg(self):
         """Average heart rate of the workout"""
-        hr_data = self.hr_values()
-        if len(hr_data) > 0:
-            return sum(hr_data)/len(hr_data)
+        try:
+            return self.activity.Lap[-1].AverageHeartRateBpm.Value.pyval
+        except:
+            hr_data = self.hr_values()
+            if len(hr_data) > 0:
+                return sum(hr_data)/len(hr_data)
 
     @property
     def hr_max(self):
-        hr_data = self.hr_values()
-        if len(hr_data) > 0:
-            return max(hr_data)
+        try:
+            return self.activity.Lap[-1].MaximumHeartRateBpm.Value.pyval
+        except:
+            hr_data = self.hr_values()
+            if len(hr_data) > 0:
+                return max(hr_data)
 
     @property
     def hr_min(self):
